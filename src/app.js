@@ -23,4 +23,5 @@ function routes() {
   //     res.send("API test OK");
   //   });
   app.use('/api/game', require('./routes/game.route'));
+  app.use('/api/board', require('./routes/board.route'));
 }
