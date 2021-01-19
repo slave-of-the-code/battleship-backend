@@ -1,4 +1,4 @@
-require('dotenv').config(); // importa las variables que estan en .env
+require('dotenv').config();
 const app = require('./app');
 require('./database');
 

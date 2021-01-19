@@ -16,6 +16,11 @@
         "semi": [2, "always"],
         "global-require":"off",
         "no-use-before-define":"off",
-        "no-console":"off"    
+        "no-console":"off",
+        "comma-dangle":"off",
+        "no-restricted-globals":"off",
+        "no-plusplus": "off",
+        "radix":"off",
+        "no-lonely-if":"off"
     }
 }
