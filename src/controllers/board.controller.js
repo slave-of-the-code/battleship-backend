@@ -1,4 +1,4 @@
-// let letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+const { SHIP_STATE } = require('../../../frontend/src/consts/const');
 
 const board = {};
 let shipPositions = [];
@@ -30,17 +30,14 @@ function generateShipPositions(shipsLength) {
     }
 
     if (boardShip) {
-      const { startPos, endPos, busyPos } = boardShip;
+      const { startPos, endPos } = boardShip;
       shipPositions.push({
         shipLong: spaces,
         startPos,
-        endPos,
-        busyPos
+        endPos
       });
     }
   });
-
-  console.log('shipPositions', shipPositions);
 }
 
 function isAvailable(letterIndex, number, isVertical, spaces) {
@@ -215,6 +212,8 @@ function isAvailable(letterIndex, number, isVertical, spaces) {
     return busyPos;
   }
 
+  function validatePosAvailable(startPos, endPos, space, busyPos) {}
+
   const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
   let row = '';
   let col = '';
@@ -234,9 +233,12 @@ function isAvailable(letterIndex, number, isVertical, spaces) {
 
   const busyPos = getBusyPos(startPos, endPos, spaces);
 
+  // validatePosAvailable(startPos, endPos, space, busyPos);
+  console.log(startPos, endPos, spaces, busyPos, shipPositions);
+
   return {
     startPos,
     endPos,
-    busyPos
+    state: SHIP_STATE.INIT
   };
 }
