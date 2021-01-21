@@ -1,14 +1,13 @@
-const { SHIP_STATE } = require('../../../frontend/src/consts/const');
-
+const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 const board = {};
-let shipPositions = [];
+let boats = [];
 
-board.setShipsHide = (req, res) => {
-  const { shipsLength } = req.body;
-  shipPositions = [];
-  generateShipPositions(shipsLength);
+board.setHiddenBoats = (req, res) => {
+  boats = [];
+  const { boatLength } = req.body;
+  generateShipPositions(boatLength);
 
-  res.json(shipPositions);
+  res.json(boats);
 };
 
 module.exports = board;
@@ -16,229 +15,183 @@ module.exports = board;
 function generateShipPositions(shipsLength) {
   shipsLength.forEach((shipLength) => {
     const spaces = shipLength;
-    function getBoardShip() {
+    function generateHiddenBoats() {
       const letterIndex = Math.floor(Math.random() * 10) + 1 - 1;
       const number = Math.floor(Math.random() * 10) + 1;
       const isVertical = Math.round(Math.random()) === 1;
 
-      return isAvailable(letterIndex, number, isVertical, spaces);
+      return generate(letterIndex, number, isVertical, spaces);
     }
 
-    let boardShip = getBoardShip();
-    while (!boardShip) {
-      boardShip = getBoardShip();
-    }
-
-    if (boardShip) {
-      const { startPos, endPos } = boardShip;
-      shipPositions.push({
-        shipLong: spaces,
-        startPos,
-        endPos
-      });
+    let result = generateHiddenBoats();
+    while (!result) {
+      result = generateHiddenBoats();
     }
   });
 }
 
-function isAvailable(letterIndex, number, isVertical, spaces) {
-  function isEndPositionOk(endPos) {
-    if (isNaN(endPos)) {
-      if (endPos.length === 3) {
-        const partNumber = endPos.split('').slice(1).join('');
-        return ['11', '12', '13'].indexOf(partNumber) === -1;
-      }
-      return true;
+function generate(letterIndex, number, isVertical, spaces) {
+  function getBoat(startPos, endPos) {
+    const boat = [];
+
+    const start = {
+      char: startPos.split('')[0],
+      charIndex: LETTERS.indexOf(startPos.split('')[0]),
+      number: parseInt(startPos.split('').slice(1).join(''))
+    };
+    const end = {
+      char: endPos.split('')[0]
+    };
+
+    for (let i = 0; i < spaces; i++) {
+      // by default HORIZONTAL
+      let coord = [start.char, start.number + i].join('');
+
+      // vertical
+      if (start.char !== end.char) coord = [LETTERS[start.charIndex + i], start.number].join('');
+
+      boat.push(coord);
     }
-    return false;
+
+    return boat; // ["B2","B3"]
   }
+  function getBoatPerimeter(startPos, endPos) {
+    const boatPerimeter = [];
 
-  function getBusyPos(startPos, endPos) {
-    const busyPos = [];
-    const firstCharStart = startPos.split('')[0];
-    const endCharStart = endPos.split('')[0];
+    const start = {
+      char: startPos.split('')[0],
+      charIndex: LETTERS.indexOf(startPos.split('')[0]),
+      number: parseInt(startPos.split('').slice(1).join(''))
+    };
+    const end = {
+      char: endPos.split('')[0],
+      charIndex: LETTERS.indexOf(endPos.split('')[0]),
+      number: parseInt(endPos.split('').slice(1).join(''))
+    };
 
-    if (firstCharStart === endCharStart) {
-      // horizontal
-      const numberStart = parseInt(startPos.split('').slice(1).join(''));
-      const lengthStart = numberStart + spaces;
+    const pushCoordPerimeter = (row, col) => {
+      boatPerimeter.push([row, col].join(''));
+    };
 
-      const indexFirstLetter = letters.indexOf(firstCharStart);
+    for (let i = 0; i < spaces; i++) {
+      if (start.char === end.char) {
+        // horizontal
 
-      if (indexFirstLetter === 0) {
-        // first row
-        const letterBusy = letters[indexFirstLetter + 1];
+        // prev ROW
+        if (start.charIndex - 1 >= 0)
+          pushCoordPerimeter(LETTERS[start.charIndex - 1], start.number + i);
 
-        if (numberStart !== 1) {
-          busyPos.push(firstCharStart + (numberStart - 1));
-          busyPos.push(letterBusy + (numberStart - 1));
-        }
-        for (let i = numberStart; i < lengthStart; i++) {
-          busyPos.push(letterBusy + i);
-        }
-        if (lengthStart <= 10) {
-          busyPos.push(letterBusy + lengthStart);
-          busyPos.push(firstCharStart + lengthStart);
-        }
-      } else if (indexFirstLetter === 9) {
-        // last row
-        const letterBusy = letters[indexFirstLetter - 1];
-
-        if (numberStart !== 1) {
-          busyPos.push(firstCharStart + (numberStart - 1));
-          busyPos.push(letterBusy + (numberStart - 1));
-        }
-        for (let i = numberStart; i < lengthStart; i++) {
-          busyPos.push(letterBusy + i);
-        }
-        if (lengthStart <= 10) {
-          busyPos.push(letterBusy + lengthStart);
-          busyPos.push(firstCharStart + lengthStart);
-        }
+        // next ROW
+        if (start.charIndex + 1 <= 9)
+          pushCoordPerimeter(LETTERS[start.charIndex + 1], start.number + i);
       } else {
-        const letterBusyPre = letters[indexFirstLetter - 1];
-        const letterBusyNex = letters[indexFirstLetter + 1];
-        if (numberStart !== 1) {
-          busyPos.push(letterBusyPre + (numberStart - 1));
-          busyPos.push(firstCharStart + (numberStart - 1));
-          busyPos.push(letterBusyNex + (numberStart - 1));
-        }
-        for (let i = numberStart; i < lengthStart; i++) {
-          busyPos.push(letterBusyPre + i);
-          busyPos.push(letterBusyNex + i);
-        }
-        if (lengthStart <= 10) {
-          busyPos.push(letterBusyPre + lengthStart);
-          busyPos.push(firstCharStart + lengthStart);
-          busyPos.push(letterBusyNex + lengthStart);
-        }
+        // vertical
+
+        // prev COL
+        if (start.number - 1 > 0)
+          pushCoordPerimeter(LETTERS[start.charIndex + i], start.number - 1);
+
+        // next COL
+        if (start.charIndex + 1 <= 10)
+          pushCoordPerimeter(LETTERS[start.charIndex + i], start.number + 1);
+      }
+    }
+
+    // vertices
+    if (start.char === end.char) {
+      // horizontal
+      if (start.number - 1 > 0) {
+        // prev COL
+        if (start.charIndex - 1 >= 0)
+          pushCoordPerimeter(LETTERS[start.charIndex - 1], start.number - 1);
+
+        pushCoordPerimeter(LETTERS[start.charIndex], start.number - 1);
+
+        if (start.charIndex + 1 <= 9)
+          pushCoordPerimeter(LETTERS[start.charIndex + 1], start.number - 1);
+      }
+      if (end.number + 1 <= 10) {
+        // next COL
+        if (start.charIndex - 1 >= 0)
+          pushCoordPerimeter(LETTERS[start.charIndex - 1], end.number + 1);
+
+        pushCoordPerimeter(LETTERS[start.charIndex], end.number + 1);
+
+        if (start.charIndex + 1 <= 9)
+          pushCoordPerimeter(LETTERS[start.charIndex + 1], end.number + 1);
       }
     } else {
       // vertical
-      const numberStart = parseInt(startPos.split('').slice(1).join(''));
-      const lengthStart = numberStart + spaces;
+      if (start.charIndex - 1 >= 0) {
+        // prev ROW
+        if (start.number - 1 > 0)
+          pushCoordPerimeter(LETTERS[start.charIndex - 1], start.number - 1);
 
-      const indexFirstLetter = letters.indexOf(firstCharStart);
+        pushCoordPerimeter(LETTERS[start.charIndex - 1], start.number);
 
-      if (numberStart === 1) {
-        // first column
-        if (indexFirstLetter === 0) {
-          // first row
-          for (let i = indexFirstLetter; i < lengthStart; i++) {
-            busyPos.push(letters.indexOf(i) + (numberStart + 1));
-          }
-          busyPos.push(letters.indexOf(indexFirstLetter + 1) + numberStart);
-          busyPos.push(letters.indexOf(indexFirstLetter + 1) + numberStart + 1);
-        } else if (indexFirstLetter === 9) {
-          // last row
-          busyPos.push(letters.indexOf(indexFirstLetter - 1) + numberStart);
-          busyPos.push(letters.indexOf(indexFirstLetter - 1) + numberStart + 1);
-          for (let i = indexFirstLetter; i < lengthStart; i++) {
-            busyPos.push(letters.indexOf(i) + (numberStart + 1));
-          }
-        } else {
-          // middle rows
-          busyPos.push(letters.indexOf(indexFirstLetter - 1) + numberStart);
-          busyPos.push(letters.indexOf(indexFirstLetter - 1) + numberStart + 1);
-          for (let i = indexFirstLetter; i < lengthStart; i++) {
-            busyPos.push(letters.indexOf(i) + (numberStart + 1));
-          }
-          busyPos.push(letters.indexOf(indexFirstLetter + 1) + numberStart);
-          busyPos.push(letters.indexOf(indexFirstLetter + 1) + numberStart + 1);
-        }
-      } else if (numberStart === 10) {
-        // last column
-        if (indexFirstLetter === 0) {
-          // first row
-          for (let i = indexFirstLetter; i < lengthStart; i++) {
-            busyPos.push(letters.indexOf(i) + (numberStart - 1));
-          }
-          busyPos.push(letters.indexOf(indexFirstLetter + 1) + numberStart);
-          busyPos.push(letters.indexOf(indexFirstLetter + 1) + numberStart - 1);
-        } else if (indexFirstLetter === 9) {
-          // last row
-          busyPos.push(letters.indexOf(indexFirstLetter - 1) + numberStart);
-          busyPos.push(letters.indexOf(indexFirstLetter - 1) + numberStart - 1);
-          for (let i = indexFirstLetter; i < lengthStart; i++) {
-            busyPos.push(letters.indexOf(i) + (numberStart - 1));
-          }
-        } else {
-          // middle rows
-          busyPos.push(letters.indexOf(indexFirstLetter - 1) + numberStart);
-          busyPos.push(letters.indexOf(indexFirstLetter - 1) + numberStart - 1);
-          for (let i = indexFirstLetter; i < lengthStart; i++) {
-            busyPos.push(letters.indexOf(i) + (numberStart - 1));
-          }
-          busyPos.push(letters.indexOf(indexFirstLetter + 1) + numberStart);
-          busyPos.push(letters.indexOf(indexFirstLetter + 1) + numberStart - 1);
-        }
-      } else {
-        // middle columns
-        const prevCol = numberStart - 1;
-        const nextCol = numberStart + 1;
-        if (indexFirstLetter === 0) {
-          // first row
-          for (let i = indexFirstLetter; i < lengthStart; i++) {
-            busyPos.push(letters[i] + prevCol);
-            busyPos.push(letters[i] + nextCol);
-          }
-          busyPos.push(letters[indexFirstLetter + 1] + prevCol);
-          busyPos.push(letters[indexFirstLetter + 1] + numberStart);
-          busyPos.push(letters[indexFirstLetter + 1] + nextCol);
-        } else if (indexFirstLetter === 9) {
-          // last row
-          busyPos.push(letters[indexFirstLetter - 1] + prevCol);
-          busyPos.push(letters[indexFirstLetter - 1] + numberStart);
-          busyPos.push(letters[indexFirstLetter - 1] + nextCol);
-          for (let i = indexFirstLetter; i < lengthStart; i++) {
-            busyPos.push(letters[i] + prevCol);
-            busyPos.push(letters[i] + (numberStart + 1));
-          }
-        } else {
-          // middle rows
-          busyPos.push(letters[indexFirstLetter - 1] + prevCol);
-          busyPos.push(letters[indexFirstLetter - 1] + numberStart);
-          busyPos.push(letters[indexFirstLetter - 1] + nextCol);
-          for (let i = indexFirstLetter; i < lengthStart; i++) {
-            busyPos.push(letters[i] + prevCol);
-            busyPos.push(letters[i] + nextCol);
-          }
-          busyPos.push(letters[indexFirstLetter + 1] + prevCol);
-          busyPos.push(letters[indexFirstLetter + 1] + numberStart);
-          busyPos.push(letters[indexFirstLetter + 1] + nextCol);
-        }
+        if (start.number + 1 <= 10)
+          pushCoordPerimeter(LETTERS[start.charIndex - 1], start.number + 1);
+      }
+      if (end.charIndex + 1 <= 9) {
+        // next ROW
+        if (start.number - 1 > 0) pushCoordPerimeter(LETTERS[end.charIndex + 1], start.number - 1);
+
+        pushCoordPerimeter(LETTERS[end.charIndex + 1], start.number);
+
+        if (start.number + 1 <= 10)
+          pushCoordPerimeter(LETTERS[end.charIndex + 1], start.number + 1);
       }
     }
 
-    return busyPos;
+    return boatPerimeter; // ['A1', 'A2', 'A3', 'A4', 'B1', 'B4', 'C1', 'C2', 'C3', 'C4']
   }
 
-  function validatePosAvailable(startPos, endPos, space, busyPos) {}
-
-  const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-  let row = '';
-  let col = '';
+  // by default Horizontal
+  let endPosLetter = LETTERS[letterIndex];
+  let endPosNumber = number + (spaces - 1);
 
   if (isVertical) {
-    row = letters[letterIndex + (spaces - 1)];
-    col = number;
-  } else {
-    row = letters[letterIndex];
-    col = number + (spaces - 1);
+    endPosLetter = LETTERS[letterIndex + (spaces - 1)];
+    endPosNumber = number;
   }
 
-  const startPos = [letters[letterIndex], number].join('');
-  const endPos = [row, col].join('');
+  const startPos = [LETTERS[letterIndex], number].join('').trim();
+  const endPos = [endPosLetter, endPosNumber].join('').trim();
 
-  if (!isEndPositionOk(endPos)) return undefined;
+  if (!endPosLetter || endPosNumber > 10) return false;
 
-  const busyPos = getBusyPos(startPos, endPos, spaces);
+  const boat = getBoat(startPos, endPos, spaces);
+  const boatPerimeter = getBoatPerimeter(startPos, endPos, spaces);
 
-  // validatePosAvailable(startPos, endPos, space, busyPos);
-  console.log(startPos, endPos, spaces, busyPos, shipPositions);
+  /* BOATS i.e:
+    - boat : ["B2","B3"],
+    - boatPerimeter : ["A1","A2","A3","A4","B1","B4","C1","C2","C3","C4"]
+  */
 
-  return {
-    startPos,
-    endPos,
-    state: SHIP_STATE.INIT
-  };
+  if (boats.length === 0) {
+    boats.push({
+      boat,
+      boatPerimeter
+    });
+    return true;
+  }
+
+  let boatsAvailable = true;
+  boats.forEach((item) => {
+    boatsAvailable &&
+      boat.forEach((b) => {
+        if (boatsAvailable)
+          boatsAvailable = !(item.boat.indexOf(b) >= 0 || item.boatPerimeter.indexOf(b) >= 0);
+      });
+  });
+
+  if (boatsAvailable) {
+    boats.push({
+      boat,
+      boatPerimeter
+    });
+    return true;
+  }
+
+  return false;
 }

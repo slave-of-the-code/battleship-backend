@@ -21,6 +21,10 @@
         "no-restricted-globals":"off",
         "no-plusplus": "off",
         "radix":"off",
-        "no-lonely-if":"off"
+        "no-lonely-if":"off",
+        "curly":"off",
+        "nonblock-statement-body-position":"off",
+        "no-unused-expressions":"off",
+        "operator-linebreak":"off"
     }
 }
